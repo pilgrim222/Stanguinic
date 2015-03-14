@@ -24,11 +24,12 @@ class QMoveableIconLabel(QWidget):
             drag.setMimeData(QMimeData())
             drag.setHotSpot(event.pos() - self.rect().topLeft())            
             drag.exec_(Qt.MoveAction)
-            #self.moveDelta = event.pos() - self.pos()
+    
+    def mousePressEvent(self, event):
+        self.moveDelta = event.pos()
     
     def processMove(self, dropEvent):
-        #self.move(dropEvent.pos() + self.moveDelta)
-        self.move(dropEvent.pos())
+        self.move(dropEvent.pos() - self.moveDelta)
         
         
 class DataWidget(QMoveableIconLabel):
