@@ -4,7 +4,7 @@ Created on 13. mar. 2015
 @author: pilgrim
 '''
 from PyQt5.QtWidgets import QDialog, QVBoxLayout, QLineEdit, QPushButton,\
-    QButtonGroup, QDialogButtonBox
+    QButtonGroup, QDialogButtonBox, QComboBox
 from PyQt5.Qt import QLabel, QHBoxLayout
 
 from enum import Enum
@@ -20,6 +20,10 @@ class FieldType(Enum):
             return QLineEdit(value, None)
         elif self == FieldType.TEXT:
             return QLineEdit(value, None)
+        elif self == FieldType.SINGLE_SELECT:
+            cbox = QComboBox()
+            cbox.addItems([v[0] for v in choices])
+            return cbox
         #... manjka
     
     @staticmethod    
@@ -63,4 +67,8 @@ class StanDialog(QDialog):
     
 class SDataDialog(StanDialog):    
     def __init__(self, values = None):
-        super().__init__([("Name", "name")], [FieldType.TEXT], [None], values)
+        fieldNames = [("Name", "name"), ("Type", "type")]
+        fieldTypes = [FieldType.TEXT, FieldType.SINGLE_SELECT]
+        fieldValues = [None, [("Integer", "int"), ("Real", "real")]]
+        super().__init__(fieldNames, fieldTypes, fieldValues)
+        
