@@ -15,11 +15,11 @@ class FieldType(Enum):
     TEXT = 2
     SINGLE_SELECT = 3
     
-    def constructInputField(self, values=None):
+    def constructInputField(self, choices=None, value=None):
         if self == FieldType.NUMERIC:
-            return QLineEdit()
+            return QLineEdit(value, None)
         elif self == FieldType.TEXT:
-            return QLineEdit()
+            return QLineEdit(value, None)
         #... manjka
     
     @staticmethod    
@@ -29,13 +29,13 @@ class FieldType(Enum):
     
 class StanDialog(QDialog):
 
-    def __init__(self, optionNames, optionTypes, optionValues):
+    def __init__(self, optionNames, optionTypes, optionValues, values=None):
         super().__init__()
         self.inputFields = {}
         self.setLayout(QVBoxLayout())
         
         for (dn,n),t,v in zip(optionNames, optionTypes, optionValues):
-            self.inputFields[n] = t.constructInputField(v)
+            self.inputFields[n] = t.constructInputField(v, values[n] if values else None)
             self.layout().addLayout(self.constructGroup(dn, self.inputFields[n]))
         
         self.layout().addWidget(self.confirmCancelButtonGroup())
@@ -60,3 +60,7 @@ class StanDialog(QDialog):
         for f in self.inputFields.keys():
             inputs[f] = FieldType.getFieldValue(self.inputFields[f])
         return inputs
+    
+class SDataDialog(StanDialog):    
+    def __init__(self, values = None):
+        super().__init__([("Name", "name")], [FieldType.TEXT], [None], values)

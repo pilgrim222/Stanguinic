@@ -8,6 +8,7 @@ import sys
 
 from PyQt5.QtWidgets import (QWidget, QApplication, QMenu, QAction, QHBoxLayout)
 from stanguinic.ModelWidgets import DataWidget
+from stanguinic.StanModel import StanModel, SData
 
 class StanCanvas(QWidget):
     '''
@@ -23,6 +24,7 @@ class StanCanvas(QWidget):
         self.setAcceptDrops(True)
         self.createTestUI()
         self.createRightClickMenu()
+        self.model = StanModel()
         
     def createTestUI(self):
         self.resize(200,200)
@@ -48,16 +50,24 @@ class StanCanvas(QWidget):
     
     def createRightClickMenu(self):
         self.rcmenu = QMenu(self)
-        addIconAction = QAction("Add data", self)
-        self.actions['addData'] = addIconAction
-        self.rcmenu.addAction(addIconAction)
+        
+        # Add data action
+        addDataAction = QAction("Add data", self)
+        self.actions['addData'] = addDataAction
+        self.rcmenu.addAction(addDataAction)
+        
+        # Add parameter action
+        addParamAction = QAction("Add parameter", self)
+        self.actions['addParameter'] = addParamAction
+        self.rcmenu.addAction(addParamAction)
         
     def addData(self, pos):
-        dataObject = DataWidget.dialog()
+        dataObject = DataWidget.createDialog()
         if not dataObject:
             return
         
-        ic = DataWidget(self, dataObject['name'])
+        ic = DataWidget(self, dataObject)
+        self.model.addData(ic.id, ic.model)
         self.dataWidgets.append(ic)
         ic.move(pos)
         ic.show()
