@@ -67,6 +67,8 @@ class DataWidget(QMoveableIconLabel):
     
     def mouseDoubleClickEvent(self, event):
         newparams = self.editDialog()
+        if not newparams:
+            return
         self.updateVisual(newparams)
         self.model.update(newparams)
     
