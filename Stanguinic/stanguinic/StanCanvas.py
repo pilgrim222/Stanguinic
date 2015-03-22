@@ -32,13 +32,18 @@ class StanCanvas(QWidget):
         self.dragline = None
         
     def createTestUI(self):
-        self.resize(200,200)
+        self.resize(800,600)
         self.show()
 
     # Override - item dropped on canvas
     def dropEvent(self, event):
-        if isinstance(event.source(), QMoveableIconLabel):
+        if isinstance(event.source(), QMoveableIconLabel):            
             event.source().processMove(event)
+        elif isinstance(event.source(), ConnectorNode):
+            self.dragline = None
+            if hasattr(event, 'droppedOn'):
+                self.connections.append((event.source(), event.droppedOn))
+        self.update()
     
     # Override - item dragged onto canvas
     def dragEnterEvent(self, event):
@@ -49,8 +54,8 @@ class StanCanvas(QWidget):
         if isinstance(event.source(), QMoveableIconLabel):
             event.source().processMove(event)
         elif isinstance(event.source(), ConnectorNode):
-            self.dragline = (event.source().mapToGlobal(event.source().pos()), event.pos())
-            self.update()
+            self.dragline = (self.mapFromGlobal(event.source().globalPosition()), event.pos())
+        self.update()
                 
     # Handles right-clicks on canvas
     def contextMenuEvent(self, event):
@@ -78,7 +83,7 @@ class StanCanvas(QWidget):
         if self.dragline != None:
             qp.drawLine(self.dragline[0], self.dragline[1])
         for (p1, p2) in self.connections:
-            qp.drawLine(10,10, 150, 150) 
+            qp.drawLine(self.mapFromGlobal(p1.globalPosition()), self.mapFromGlobal(p2.globalPosition())) 
         qp.end()
         
     def addData(self, pos):

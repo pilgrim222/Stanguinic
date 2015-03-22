@@ -6,8 +6,8 @@ Created on Mar 11, 2015
 
 import stanguinic.StanModel as StanModel
 
-from PyQt5.QtWidgets import QWidget, QLabel, QMenu, QGridLayout, QVBoxLayout, QFrame, QLayout
-from PyQt5.QtCore import Qt, QMimeData, QSize, QEvent
+from PyQt5.QtWidgets import QWidget, QLabel, QMenu, QGridLayout, QVBoxLayout, QFrame, QLayout, QSizePolicy
+from PyQt5.QtCore import Qt, QMimeData, QSize, QEvent, QPoint
 from PyQt5.QtGui import QDrag, QIcon
 from stanguinic.StanDialog import SDataDialog
 from stanguinic.StanModel import SData, SParameter
@@ -40,6 +40,10 @@ class QMoveableIconLabel(QWidget):
     
     def processMove(self, dropEvent):
         self.move(dropEvent.pos() - self._moveDelta)
+        
+    # By default forwards drops to be handeled at the widget's parend
+    def dropEvent(self, event):
+        return self.parentWidget().dropEvent(event)
     
     # Creates the default visual representation (icon with text underneath)
     # Needs the initIcon function to be implemented and return a QPixmap object
@@ -161,20 +165,19 @@ class ConnectorNode(QLabel):
         super().__init__(parent)
         self.setPixmap(QPixmap("images/connectorIcon.png").scaledToHeight(10))
         self.setAcceptDrops(True)
-    
-        
-    def connect(self, c):
-        return (self, c)
+        self.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
     
     def dropEvent(self, e):
         if isinstance(e.source(), ConnectorNode):
-            print("Put your hands up")
-            
-        # Override - item dragged onto canvas
+            e.droppedOn = self
+            return self.parentWidget().dropEvent(e)
+
     def dragEnterEvent(self, event):
-        print("WOP WHOP")
         event.accept()
-    
+        
+    def dragMoveEvent(self, e):
+        return self.parentWidget().dragMoveEvent(e)
+            
     def mouseMoveEvent(self, event):
         if event.buttons() == Qt.LeftButton:
             drag = QDrag(self)
@@ -182,6 +185,11 @@ class ConnectorNode(QLabel):
             drag.setHotSpot(event.pos() - self.rect().topLeft())            
             drag.exec_(Qt.MoveAction)
 
+    def globalPosition(self):
+        connectionPoint = QPoint(self.pos())
+        connectionPoint.setX(connectionPoint.x() + self.width()/2)
+        connectionPoint.setY(connectionPoint.y() + self.height()/2)
+        return self.parentWidget().mapToGlobal(connectionPoint)
 
 class ConnectorsLayout(QVBoxLayout):
     def __init__(self):
