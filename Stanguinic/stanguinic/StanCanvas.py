@@ -7,7 +7,10 @@ Created on Mar 5, 2015
 import sys
 
 from PyQt5.QtWidgets import (QWidget, QApplication, QMenu, QAction, QHBoxLayout)
-from stanguinic.ModelWidgets import DataWidget
+from PyQt5.QtGui import QPainter, QPen
+from PyQt5.QtCore import Qt
+
+from stanguinic.ModelWidgets import DataWidget, QMoveableIconLabel, ConnectorNode
 from stanguinic.StanModel import StanModel, SData
 
 class StanCanvas(QWidget):
@@ -25,6 +28,8 @@ class StanCanvas(QWidget):
         self.createTestUI()
         self.createRightClickMenu()
         self.model = StanModel()
+        self.connections = []
+        self.dragline = None
         
     def createTestUI(self):
         self.resize(200,200)
@@ -32,7 +37,8 @@ class StanCanvas(QWidget):
 
     # Override - item dropped on canvas
     def dropEvent(self, event):
-        event.source().processMove(event)
+        if isinstance(event.source(), QMoveableIconLabel):
+            event.source().processMove(event)
     
     # Override - item dragged onto canvas
     def dragEnterEvent(self, event):
@@ -40,8 +46,12 @@ class StanCanvas(QWidget):
         
     # Override - item dragged over canvas
     def dragMoveEvent(self, event):
-        event.source().processMove(event)
-    
+        if isinstance(event.source(), QMoveableIconLabel):
+            event.source().processMove(event)
+        elif isinstance(event.source(), ConnectorNode):
+            self.dragline = (event.source().mapToGlobal(event.source().pos()), event.pos())
+            self.update()
+                
     # Handles right-clicks on canvas
     def contextMenuEvent(self, event):
         action = self.rcmenu.exec_(self.mapToGlobal(event.pos()))
@@ -60,6 +70,16 @@ class StanCanvas(QWidget):
         addParamAction = QAction("Add parameter", self)
         self.actions['addParameter'] = addParamAction
         self.rcmenu.addAction(addParamAction)
+        
+    def paintEvent(self, event):
+        qp = QPainter()
+        qp.begin(self)
+        qp.setPen(QPen(Qt.black, 2, Qt.SolidLine))
+        if self.dragline != None:
+            qp.drawLine(self.dragline[0], self.dragline[1])
+        for (p1, p2) in self.connections:
+            qp.drawLine(10,10, 150, 150) 
+        qp.end()
         
     def addData(self, pos):
         dataObject = DataWidget.createDialog()
