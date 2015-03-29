@@ -142,7 +142,7 @@ class SDataDialog(StanDialog):
     def updateSubgroup(self, newIndex):
         self.clearSpecific()
         self.specificGroup(self.inputFields["type"].currentData())
-        
+        self.adjustSize()
         
     class SIntSubGroup(QVBoxLayout):
         names = []
