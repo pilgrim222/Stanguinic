@@ -5,7 +5,7 @@ Created on 13. mar. 2015
 '''
 from PyQt5.QtWidgets import QDialog, QVBoxLayout, QLineEdit, QPushButton,\
     QButtonGroup, QDialogButtonBox, QComboBox, QSpinBox, QWidget
-from PyQt5.Qt import QLabel, QHBoxLayout
+from PyQt5.Qt import QLabel, QHBoxLayout, QPalette, QSizePolicy
 from stanguinic.StanModel import SData
 
 from enum import Enum
@@ -47,12 +47,16 @@ class InputGroup(QWidget):
     """
     Holds a QLabel (property name) + input field
     """     
-    def __init__(self, name, field):
+    
+    def __init__(self, name, label, field):
         super().__init__()
-        self.name = name
+        self.label = label
         self.field = field
+        self.name = name
         self.setLayout(QHBoxLayout())
-        self.layout().addWidget(QLabel(name))
+        self.layout().setSpacing(0)
+        self.layout().setContentsMargins(0,0,0,0)
+        self.layout().addWidget(QLabel(label))
         self.layout().addWidget(field)
         
     def delete(self):
@@ -68,14 +72,13 @@ class StanDialog(QDialog):
         
         for (dn,n),t,v in zip(optionNames, optionTypes, optionValues):
             self.inputFields[n] = t.constructInputField(v, values[n] if n in values else None)
-            self.layout().addWidget(InputGroup(dn, self.inputFields[n]))
+            self.layout().addWidget(InputGroup(n, dn, self.inputFields[n]))
         
         self.layout().addLayout(self.connectorsGroup(values))
         self.specificOptions = QVBoxLayout()
         self.layout().addLayout(self.specificOptions)      
         self.layout().addWidget(self.confirmCancelButtonGroup())
-    
-
+        
     
     def confirmCancelButtonGroup(self):
         buttons = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel,
@@ -92,19 +95,20 @@ class StanDialog(QDialog):
         self.inputFields['indegree'] = FieldType.SPIN.constructInputField(None, values['indegree'] if values else 0)
         self.inputFields['outdegree'] = FieldType.SPIN.constructInputField(None, values['outdegree'] if values else 0)
         
-        layout.addWidget(InputGroup("Inputs", self.inputFields['indegree']))
-        layout.addWidget(InputGroup("Outputs", self.inputFields['outdegree']))
+        layout.addWidget(InputGroup("indegree", "Inputs", self.inputFields['indegree']))
+        layout.addWidget(InputGroup("outdegree", "Outputs", self.inputFields['outdegree']))
         
         return layout
     
     def specificGroup(self, specClass, values={}):
         for (hn, n), t, v in zip(specClass.names, specClass.types, specClass.values):
             self.inputFields[n] = t.constructInputField(v, values[n] if n in values else None)
-            self.specificOptions.addWidget(InputGroup(hn, self.inputFields[n]))
+            self.specificOptions.addWidget(InputGroup(n, hn, self.inputFields[n]))
             
     def clearSpecific(self):
         for i in range(self.specificOptions.count()):
             e = self.specificOptions.takeAt(0)
+            del self.inputFields[e.widget().name]
             e.widget().delete()
     
     def getInput(self):
@@ -137,7 +141,8 @@ class SDataDialog(StanDialog):
         
     def updateSubgroup(self, newIndex):
         self.clearSpecific()
-        self.specificGroup(self.inputFields["type"].currentData())       
+        self.specificGroup(self.inputFields["type"].currentData())
+        
         
     class SIntSubGroup(QVBoxLayout):
         names = []
