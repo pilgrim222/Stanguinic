@@ -10,7 +10,7 @@ from PyQt5.QtWidgets import (QWidget, QApplication, QMenu, QAction, QHBoxLayout)
 from PyQt5.QtGui import QPainter, QPen
 from PyQt5.QtCore import Qt
 
-from stanguinic.ModelWidgets import DataWidget, QMoveableIconLabel, ConnectorNode
+from stanguinic.ModelWidgets import DataWidget, QMoveableIconLabel, ConnectorNode, ParameterWidget
 from stanguinic.StanModel import StanModel, SData
 
 class StanCanvas(QWidget):
@@ -62,6 +62,8 @@ class StanCanvas(QWidget):
         action = self.rcmenu.exec_(self.mapToGlobal(event.pos()))
         if action == self.actions['addData']:
             self.addData(event.pos())
+        elif action == self.actions['addParameter']:
+            self.addParameter(event.pos())
     
     def createRightClickMenu(self):
         self.rcmenu = QMenu(self)
@@ -93,6 +95,17 @@ class StanCanvas(QWidget):
         
         ic = DataWidget(self, dataObject)
         self.model.addData(ic.id, ic.model)
+        self.dataWidgets.append(ic)
+        ic.move(pos)
+        ic.show()
+        
+    def addParameter(self, pos):
+        dataObject = ParameterWidget.createDialog()
+        if not dataObject:
+            return
+        
+        ic = ParameterWidget(self, dataObject)
+        self.model.addParameter(ic.id, ic.model)
         self.dataWidgets.append(ic)
         ic.move(pos)
         ic.show()

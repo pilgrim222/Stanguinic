@@ -12,29 +12,25 @@ class StanModel:
     def addData(self, id, data):
         self.data[id] = data
         
+    def addParameter(self, id, parameter):
+        self.parameters[id] = parameter
+        
 
 class SBase:
     def __init__(self):
-        self.name = None
-        self.indegree = 0
-        self.outdegree = 0
+        self.data = {}
         
     def getParams(self):
-        a = {}
-        a['name'] = self.name
-        a['indegree'] = self.indegree
-        a['outdegree'] = self.outdegree
-        return a
+        return self.data
 
     def update(self, params):
-        self.name = params['name']
-        self.indegree = params['indegree']
-        self.outdegree = params['outdegree']
+        self.data.update(params)
 
+
+########### DATA ##################
 class SData(SBase):
     def __init__(self):
         super().__init__()
-        self.type = None # To bo postalo odvec -- naj bo razvidno iz classa!
     
     @staticmethod
     def fromDictionary(parameters):
@@ -42,38 +38,27 @@ class SData(SBase):
         d.update(parameters)
         return d
     
-    def update(self, parameters):
-        super().update(parameters)
-        self.name = parameters['name']
-        self.type = parameters['type']
-        
-    def getParams(self):
-        params = super().getParams()
-        params['name'] = self.name
-        params['type'] = self.type
-        return params
-    
-    class SInt:
-        def __init__(self):
-            super().__init__()
-    
-    class SReal:
-        def __init__(self):
-            super().__init__()
-            
-    class SVector:
-        def __init__(self):
-            super().__init__()
-    
-    #... Tle gremo dalje se ostalo - bolj pametno: izven main classa in deduj iz SData
-    # Gnezdenje classov namreč samo po sebi nima nobenega pomena.
-
-class SParameter:
+class SInt(SData):
     def __init__(self):
-        self.name = None
-        self.type = None
+        super().__init__()
+    
+class SReal(SData):
+    def __init__(self):
+        super().__init__()
+            
+class SVector(SData):
+    def __init__(self):
+        super().__init__()
+
+
+############ PARAMETERS ###############   
+class SParameter(SBase):
+    def __init__(self):
+        super().__init__()
         
     @staticmethod
     def fromDictionary(parameters):
-        pass
+        d = SParameter()
+        d.update(parameters)
+        return d
     

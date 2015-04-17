@@ -158,7 +158,36 @@ class ParameterWidget(QMoveableIconLabel):
         self.id = parameters['name']
         self.createVisual(parameters)
         self.model = SParameter.fromDictionary(parameters)
-
+    
+    def updateParams(self, newParams):
+        self.model.update(newParams)
+    
+    def mouseDoubleClickEvent(self, event):
+        newparams = self.editDialog()
+        if not newparams:
+            return
+        self.updateVisual(newparams)
+        self.model.update(newparams)
+    
+    # Prompt user for new data item specification (static)
+    @staticmethod
+    def createDialog():
+        dwdiag = SDataDialog()
+        diagres = dwdiag.exec_()
+        if not diagres: 
+            return None
+        return dwdiag.getInput()    
+    
+    def editDialog(self):
+        params = self.model.getParams()
+        editDiag = SDataDialog(params)
+        val = editDiag.exec_()
+        if not val: 
+            return None
+        return editDiag.getInput()
+    
+    def initIcon(self):
+        return QPixmap("images/parameterIcon.png").scaledToHeight(50)
 
 class ConnectorNode(QLabel):
     def __init__(self, parent=None):
