@@ -4,17 +4,22 @@ Created on Mar 11, 2015
 @author: pilgrim
 '''
 
-import stanguinic.StanModel as StanModel
-
-from PyQt5.QtWidgets import QWidget, QLabel, QMenu, QGridLayout, QVBoxLayout, QFrame, QLayout, QSizePolicy
+from PyQt5.Qt import QPixmap
 from PyQt5.QtCore import Qt, QMimeData, QSize, QEvent, QPoint
 from PyQt5.QtGui import QDrag, QIcon
-from stanguinic.StanDialog import SDataDialog
-from stanguinic.StanModel import SData, SParameter
-from PyQt5.Qt import QPixmap
+from PyQt5.QtWidgets import QWidget, QLabel, QMenu, QGridLayout, QVBoxLayout, QFrame, QLayout, QSizePolicy
+from stanguinic.StanModel import SParameter
+import stanguinic.StanModel as StanModel
+from stanguinic.dialogs.DataDialog import DataDialog
+
 
 class QMoveableIconLabel(QWidget):
+    '''
+    General class which functions as an icon + text with the ability
+    to drag & drop it around its parent widget.
+    The parent widget should call the processMove function on drop event.
     
+    '''    
     def __init__(self, parent):
         super().__init__(parent)
         self.indegree = 0
@@ -22,12 +27,6 @@ class QMoveableIconLabel(QWidget):
         self.inConnectors = []
         self.outConnectors = []
         
-    '''
-    General class which functions as an icon + text with the ability
-    to drag & drop it around its parent widget.
-    The parent widget should call the processMove function on drop event.
-    
-    '''
     def mouseMoveEvent(self, event):
         if event.buttons() == Qt.LeftButton:
             drag = QDrag(self)
@@ -41,7 +40,7 @@ class QMoveableIconLabel(QWidget):
     def processMove(self, dropEvent):
         self.move(dropEvent.pos() - self._moveDelta)
         
-    # By default forwards drops to be handeled at the widget's parend
+    # By default forwards drops to be handled at the widget's parent
     def dropEvent(self, event):
         return self.parentWidget().dropEvent(event)
     
@@ -74,18 +73,21 @@ class QMoveableIconLabel(QWidget):
         
     def createInOutNodes(self):
         self._left = ConnectorsLayout()
-        self.inConnectors = self._left.initConnectors(self, self.indegree)
+        self.inConnectors = self._left.initConnectors(self, self.indegree, True)
         self._right = ConnectorsLayout()
-        self.outConnectors = self._right.initConnectors(self, self.outdegree) 
+        self.outConnectors = self._right.initConnectors(self, self.outdegree, False) 
     
     def addInConnector(self):
-        self.inConnectors.append(self._left.addConnector(self))
+        self.inConnectors.append(self._left.addConnector(self, True))
         self.indegree = self.indegree + 1
         
     def addOutConnector(self):
-        self.outConnectors.append(self._right.addConnector(self))
+        self.outConnectors.append(self._right.addConnector(self, False))
         self.outdegree = self.outdegree + 1
     
+    # Complicated due to connector handling (adding and removing)
+    # Is there a more elegant solution? (Besides putting the connector handling
+    # in another function?
     def updateVisual(self, newParams):
         self._text.setText(newParams['name'])
         
@@ -113,14 +115,15 @@ class QMoveableIconLabel(QWidget):
             
         return super().event(e)
 
-class DataWidget(QMoveableIconLabel):
-    
+
+
+class ParameterWidget(QMoveableIconLabel):
     def __init__(self, parent, parameters):
         super().__init__(parent)
         self.id = parameters['name']
         self.createVisual(parameters)
-        self.model = SData.fromDictionary(parameters)
-        
+        self.model = SParameter.fromDictionary(parameters)
+    
     def updateParams(self, newParams):
         self.model.update(newParams)
     
@@ -134,7 +137,7 @@ class DataWidget(QMoveableIconLabel):
     # Prompt user for new data item specification (static)
     @staticmethod
     def createDialog():
-        dwdiag = SDataDialog()
+        dwdiag = DataDialog()
         diagres = dwdiag.exec_()
         if not diagres: 
             return None
@@ -142,30 +145,23 @@ class DataWidget(QMoveableIconLabel):
     
     def editDialog(self):
         params = self.model.getParams()
-        editDiag = SDataDialog(params)
+        editDiag = DataDialog(params)
         val = editDiag.exec_()
         if not val: 
             return None
         return editDiag.getInput()
     
     def initIcon(self):
-        return QPixmap("images/dataIcon.png").scaledToHeight(50)
-    
-
-class ParameterWidget(QMoveableIconLabel):
-    def __init__(self, parent, parameters):
-        super().__init__(parent)
-        self.id = parameters['name']
-        self.createVisual(parameters)
-        self.model = SParameter.fromDictionary(parameters)
-
+        return QPixmap("images/parameterIcon.png").scaledToHeight(50)
 
 class ConnectorNode(QLabel):
-    def __init__(self, parent=None):
+    def __init__(self, parent=None, isInput=False):
         super().__init__(parent)
         self.setPixmap(QPixmap("images/connectorIcon.png").scaledToHeight(10))
         self.setAcceptDrops(True)
         self.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
+        self.isInput = isInput
+        self.connections = 0
     
     def dropEvent(self, e):
         if isinstance(e.source(), ConnectorNode):
@@ -190,16 +186,22 @@ class ConnectorNode(QLabel):
         connectionPoint.setX(connectionPoint.x() + self.width()/2)
         connectionPoint.setY(connectionPoint.y() + self.height()/2)
         return self.parentWidget().mapToGlobal(connectionPoint)
+    
+    def validDrop(self, other):
+        return not self.full() and not other.full() and self.isInput != other.isInput
+    
+    def full(self):
+        return self.isInput and self.connections > 0
 
 class ConnectorsLayout(QVBoxLayout):
     def __init__(self):
         super().__init__()
         
-    def initConnectors(self, parent, n):
-        return [self.addConnector(parent) for i in range(n)]
+    def initConnectors(self, parent, n, isInput):
+        return [self.addConnector(parent, isInput) for i in range(n)]
     
-    def addConnector(self, parent):
-        c = ConnectorNode()
+    def addConnector(self, parent, isInput):
+        c = ConnectorNode(parent=parent, isInput=isInput)
         self.addWidget(c)
         return c
         
@@ -207,3 +209,19 @@ class ConnectorsLayout(QVBoxLayout):
         self.removeWidget(w)
         w.deleteLater()
         w.close()
+
+class ConnectorLine:
+    def __init__(self, c1, c2):
+        if c1.isInput:
+            self.start = c2
+            self.end = c1
+        else:
+            self.start = c1
+            self.end = c2
+    
+    def startsWith(self, c):
+        return self.start == c
+
+    def endsWith(self, c):
+        return self.end == c
+    

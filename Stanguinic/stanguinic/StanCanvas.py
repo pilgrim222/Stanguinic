@@ -6,12 +6,13 @@ Created on Mar 5, 2015
 
 import sys
 
-from PyQt5.QtWidgets import (QWidget, QApplication, QMenu, QAction, QHBoxLayout)
-from PyQt5.QtGui import QPainter, QPen
 from PyQt5.QtCore import Qt
-
-from stanguinic.ModelWidgets import DataWidget, QMoveableIconLabel, ConnectorNode
+from PyQt5.QtGui import QPainter, QPen
+from PyQt5.QtWidgets import (QWidget, QApplication, QMenu, QAction, QHBoxLayout)
+from stanguinic.ModelWidgets import QMoveableIconLabel, ConnectorNode, ParameterWidget, ConnectorLine
+from stanguinic.widgets.DataWidget import DataWidget
 from stanguinic.StanModel import StanModel, SData
+
 
 class StanCanvas(QWidget):
     '''
@@ -41,8 +42,10 @@ class StanCanvas(QWidget):
             event.source().processMove(event)
         elif isinstance(event.source(), ConnectorNode):
             self.dragline = None
-            if hasattr(event, 'droppedOn'):
-                self.connections.append((event.source(), event.droppedOn))
+            if hasattr(event, 'droppedOn') and event.source().validDrop(event.droppedOn):                
+                event.droppedOn.connections = event.droppedOn.connections +1
+                event.source().connections = event.source().connections + 1
+                self.connections.append(ConnectorLine(event.source(), event.droppedOn))
         self.update()
     
     # Override - item dragged onto canvas
@@ -54,7 +57,15 @@ class StanCanvas(QWidget):
         if isinstance(event.source(), QMoveableIconLabel):
             event.source().processMove(event)
         elif isinstance(event.source(), ConnectorNode):
-            self.dragline = (self.mapFromGlobal(event.source().globalPosition()), event.pos())
+            if event.source().full():
+                # if the source is full find the connector and disconnect this point
+                event.source().connections = event.source().connections - 1
+                relcon = next(e for e in self.connections if e.endsWith(event.source()))
+                self.dragline = (self.mapFromGlobal(relcon.start.globalPosition()), event.pos())
+                self.connections.remove(relcon)
+            else:
+                self.dragline = (self.dragline[0] if self.dragline else 
+                                 self.mapFromGlobal(event.source().globalPosition()), event.pos())
         self.update()
                 
     # Handles right-clicks on canvas
@@ -62,6 +73,8 @@ class StanCanvas(QWidget):
         action = self.rcmenu.exec_(self.mapToGlobal(event.pos()))
         if action == self.actions['addData']:
             self.addData(event.pos())
+        elif action == self.actions['addParameter']:
+            self.addParameter(event.pos())
     
     def createRightClickMenu(self):
         self.rcmenu = QMenu(self)
@@ -82,10 +95,11 @@ class StanCanvas(QWidget):
         qp.setPen(QPen(Qt.black, 2, Qt.SolidLine))
         if self.dragline != None:
             qp.drawLine(self.dragline[0], self.dragline[1])
-        for (p1, p2) in self.connections:
-            qp.drawLine(self.mapFromGlobal(p1.globalPosition()), self.mapFromGlobal(p2.globalPosition())) 
+        for c in self.connections:
+            qp.drawLine(self.mapFromGlobal(c.start.globalPosition()), self.mapFromGlobal(c.end.globalPosition())) 
         qp.end()
-        
+    
+    # Opens the add data menu and adds the new parameter    
     def addData(self, pos):
         dataObject = DataWidget.createDialog()
         if not dataObject:
@@ -93,6 +107,18 @@ class StanCanvas(QWidget):
         
         ic = DataWidget(self, dataObject)
         self.model.addData(ic.id, ic.model)
+        self.dataWidgets.append(ic)
+        ic.move(pos)
+        ic.show()
+    
+    # Opens the add parameter menu and adds the new parameter
+    def addParameter(self, pos):
+        dataObject = ParameterWidget.createDialog()
+        if not dataObject:
+            return
+        
+        ic = ParameterWidget(self, dataObject)
+        self.model.addParameter(ic.id, ic.model)
         self.dataWidgets.append(ic)
         ic.move(pos)
         ic.show()
