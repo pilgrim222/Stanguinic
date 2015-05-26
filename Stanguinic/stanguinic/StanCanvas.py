@@ -61,7 +61,6 @@ class StanCanvas(QWidget):
                 # if it is full find the connector and disconnect this point
                 event.source().connections = event.source().connections - 1
                 relcon = next(e for e in self.connections if e.endsWith(event.source()))
-                #self.dragline = (self.mapFromGlobal(relcon.start.globalPosition()), event.pos())
                 self.dragline = (relcon.start, event.pos())
                 self.connections.remove(relcon)
             else:
