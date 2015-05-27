@@ -8,6 +8,7 @@ class FieldType(Enum):
     TEXT = 2
     SINGLE_SELECT = 3
     SPIN = 4
+    DISTRIBUTION = 5 # To je malo nerodno...
     
     def constructInputField(self, choices=None, value=None):
         if self == FieldType.NUMERIC:
@@ -24,6 +25,8 @@ class FieldType(Enum):
             spin = QSpinBox()
             spin.setValue(value if value else 0)
             return spin
+        elif self == FieldType.DISTRIBUTION:
+            return DistributionGroup()
     
     @staticmethod    
     def getFieldValue(field):
@@ -33,3 +36,7 @@ class FieldType(Enum):
             return field.currentText()
         elif isinstance(field, QSpinBox):
             return field.value()
+        
+
+
+from stanguinic.dialogs.aux.Distribution import DistributionGroup

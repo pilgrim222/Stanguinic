@@ -2,7 +2,7 @@ from stanguinic.dialogs.Dialog import *
 from stanguinic.dialogs.aux.FieldType import FieldType
 
 
-class DataDialog(StanDialog):    
+class DataDialog(StanDialog):
     
     def __init__(self, values = None):
         fieldNames = [("Name", "name"), ("Type", "type")]
@@ -35,9 +35,9 @@ class DataDialog(StanDialog):
         values = []
         
     class SRealSubGroup:
-        names = []
-        types = []
-        values = []
+        names = [("Distribution", 'distribution')]
+        types = [FieldType.DISTRIBUTION]
+        values = [None]
         
     class SVectorSubGroup:
         names = [("Element type", "vec.type"), ("Direction", "vec.direction")]
