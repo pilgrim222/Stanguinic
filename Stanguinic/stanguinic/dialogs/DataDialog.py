@@ -1,5 +1,5 @@
 from stanguinic.dialogs.Dialog import *
-from stanguinic.dialogs.aux.FieldType import FieldType
+from stanguinic.dialogs.auxliary.FieldType import FieldType
 
 
 class DataDialog(StanDialog):

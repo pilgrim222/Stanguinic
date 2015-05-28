@@ -1,4 +1,4 @@
-from stanguinic.dialogs.aux.FieldType import FieldType
+from stanguinic.dialogs.auxiliary.FieldType import FieldType
 from PyQt5.QtWidgets import QVBoxLayout, QWidget
 
 class Distribution:

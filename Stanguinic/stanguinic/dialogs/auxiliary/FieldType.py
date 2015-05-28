@@ -39,4 +39,4 @@ class FieldType(Enum):
         
 
 
-from stanguinic.dialogs.aux.Distribution import DistributionGroup
+from stanguinic.dialogs.auxiliary.Distribution import DistributionGroup

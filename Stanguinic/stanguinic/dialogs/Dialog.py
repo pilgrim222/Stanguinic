@@ -9,7 +9,7 @@ from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import QDialog, QVBoxLayout, QLineEdit, QPushButton, \
     QButtonGroup, QDialogButtonBox, QComboBox, QSpinBox, QWidget
 from stanguinic.StanModel import SData
-from stanguinic.dialogs.aux.FieldType import FieldType
+    from stanguinic.dialogs.auxiliary.FieldType import FieldType
 
 
 class InputGroup(QWidget):
